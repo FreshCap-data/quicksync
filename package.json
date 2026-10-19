@@ -1,8 +1,8 @@
 {
-  "name": "syncwave-youtube",
+  "name": "unison",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "description": "Play one YouTube track in sync across every device in a room (Cloudflare Workers + Durable Objects)",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"

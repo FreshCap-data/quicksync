@@ -1,0 +1,20 @@
+name = "unison"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# Static site (public/) is served by Cloudflare directly.
+# The Worker only runs for WebSocket requests under /ws/*.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/ws/*"]
+
+# One Durable Object instance per room code.
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+# The free plan only supports SQLite-backed Durable Objects.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

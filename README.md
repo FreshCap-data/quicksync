@@ -1,61 +1,64 @@
-# SyncWave — YouTube + WebSockets
+# Unison
 
-A starter web app for synchronized YouTube playback across devices. It uses:
-- YouTube Data API v3 for search (optional; direct YouTube URLs/video IDs also work)
-- YouTube IFrame Player API for playback
-- Cloudflare Worker + Durable Objects WebSockets for shared room state
-- Cloudflare static assets for hosting
+Play one YouTube track in sync on every device in a room.
+Cloudflare Worker + Durable Objects (WebSockets) on the server, plain HTML/CSS/JS on the client, no build step.
 
-## Important limitations
-- YouTube is played through the official embedded player; this app does not extract audio.
-- Browsers, especially mobile Safari, may block remote autoplay until the user taps **Enable playback** on each device.
-- This is best-effort synchronization, not sample-accurate multi-room audio. Network and YouTube buffering cause timing differences.
-- Keep the embedded YouTube player visible and comply with YouTube API policies.
-- This starter has no authentication or room permissions. Anyone who knows a room code can control that room. Don't use it for private rooms without adding access control.
+## Run it
 
-## Deploy to Cloudflare Workers
-
-1. Install Node.js LTS.
-2. Extract this folder and run:
-   ```bash
-   npm create cloudflare@latest -- syncwave-youtube
-   ```
-   Alternatively, in this folder install Wrangler:
-   ```bash
-   npm install --save-dev wrangler
-   ```
-3. Ensure `package.json` includes:
-   ```json
-   { "private": true, "scripts": { "dev": "wrangler dev", "deploy": "wrangler deploy" }, "devDependencies": { "wrangler": "^4.0.0" } }
-   ```
-4. Run:
-   ```bash
-   npx wrangler login
-   npx wrangler deploy
-   ```
-   Wrangler creates/deploys the Durable Object migration and static assets. If it asks for billing or account setup, follow the current Cloudflare dashboard prompts.
-5. Open the deployed Worker URL. Create a room and share the link with other devices.
-
-For local development:
 ```bash
 npm install
-npm run dev
+npm run dev        # http://localhost:8787
 ```
 
-## Enable YouTube search (optional)
+Open the page in two browser windows (or a laptop and a phone on the same Wi-Fi, using your computer's LAN IP),
+join the same room code, paste a YouTube link, press play.
 
-1. Open Google Cloud Console: https://console.cloud.google.com/
-2. Create/select a project and enable **YouTube Data API v3**.
-3. Create an API key.
-4. Restrict the key to YouTube Data API v3 and HTTP referrers for your deployed domain.
-5. Paste it into the app's YouTube Data API key field. It is stored in sessionStorage for the current browser session only.
+## Deploy (free plan)
 
-If you don't set a key, paste a YouTube video URL or 11-character video ID into the search box and add/play it.
+```bash
+npx wrangler login
+npm run deploy     # gives you https://unison.<your-subdomain>.workers.dev
+```
 
-## Deploying to Cloudflare Pages
-This project uses a Durable Object Worker, so deploy it as a Cloudflare Worker with static assets as configured in `wrangler.jsonc`, rather than uploading only the HTML to Pages. A Pages-only static deployment cannot run this WebSocket server.
+No config needed. The free plan works because `wrangler.toml` uses a SQLite-backed Durable Object (`new_sqlite_classes`).
+
+## How the sync works
+
+1. **Server is the clock.** Each room is one Durable Object. It stores `{ videoId, playing, position, updatedAt, version }`.
+2. **Clock offset.** On connect, each device sends 8 pings, measures round-trip time, and keeps the offset from the
+   lowest-latency sample. `serverNow = localNow + offset`. Refreshed every 15 s and when the tab becomes visible.
+3. **Scheduled start.** Play and seek (while playing) are stamped `now + 1200 ms` on the server. Every device parks at the
+   start position, then calls `playVideo()` at that server time on its own clock.
+4. **Start-lag learning.** Each device measures how long `playVideo()` takes to produce sound and starts that much
+   earlier next time (saved in `localStorage`).
+5. **Drift correction.** Once a second each device compares the expected position with the player's position. If it is more
+   than 250 ms off, it seeks (with a 5 s cooldown).
+6. **Late joiners** get the current state and jump to the right position.
+
+The flashing yellow disc is a visual check: it pulses on every whole second of the shared server clock,
+so devices that are in sync flash together.
 
 ## Files
-- `public/index.html` — UI and browser client
-- `src/worker.js` — Worker routing and Durable Object WebSocket room
-- `wrangler.jsonc` — Durable Object and static asset configuration
+
+| File | Purpose |
+|---|---|
+| `src/worker.js` | Worker (routes `/ws/<room>`) and the `Room` Durable Object |
+| `public/index.html`, `style.css`, `app.js` | The site |
+| `wrangler.toml` | Config: static assets, Durable Object binding, migration |
+
+## Tuning
+
+- `LEAD_MS` in `src/worker.js` (1200): raise if devices on slow networks start late.
+- `DRIFT_LIMIT` in `public/app.js` (0.25 s): lower is tighter but causes more seeks (each seek can cause a small stutter).
+
+## Known limits
+
+- **Accuracy is roughly 100 to 300 ms** with YouTube. The IFrame API gives no control over the audio clock, so this suits a
+  listening party, not several speakers in one room (you would hear an echo). For tight sync, host audio files
+  (for example on Cloudflare R2) and play them with the Web Audio API, which can schedule to the millisecond.
+- **Mobile autoplay.** Browsers may block audio that was not started by a tap. When that happens the page shows a
+  "Start audio" bar and makes the video tappable. iOS Safari is the strictest.
+- **YouTube's player must stay visible**, so audio-only is not possible with the IFrame API.
+- **Anyone with the room code can control playback.** Room codes are the only access control.
+- Free-plan limits are generous for small rooms (WebSocket messages count at a 20:1 ratio against the request quota).
+  Check Cloudflare's current limits if a room gets large.
