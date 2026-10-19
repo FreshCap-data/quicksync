@@ -1,207 +1,86 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090b10">
-<title>SyncWave — Shared YouTube Player</title>
-<style>
-:root{color-scheme:dark;--bg:#090b10;--panel:#121722;--panel2:#171e2b;--line:#283244;--text:#f4f7fb;--muted:#9ca9bc;--accent:#7c5cff;--accent2:#a99aff;--green:#52d6a0;--red:#ff657a}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#17162b 0,#090b10 48%);color:var(--text);font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-.wrap{width:min(1050px,100%);margin:auto;padding:22px 16px 44px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.brand{display:flex;gap:11px;align-items:center}.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#8a69ff,#4d35b5);font-size:21px;box-shadow:0 8px 24px #5d43d944}.brand h1{font-size:20px;margin:0;letter-spacing:-.5px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.pill{border:1px solid var(--line);border-radius:99px;padding:7px 11px;color:var(--muted);font-size:12px;white-space:nowrap}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#697386;margin-right:6px}.dot.ok{background:var(--green)}.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:16px}.panel{background:linear-gradient(180deg,#141a26f5,#10151ef5);border:1px solid var(--line);border-radius:20px;padding:17px;box-shadow:0 18px 55px #0002;min-width:0}.panel h2{font-size:15px;margin:0 0 13px}.playerbox{background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;position:relative}.playerbox iframe{width:100%;height:100%;border:0}.placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:#aab3c4;background:linear-gradient(135deg,#151925,#07090d)}.placeholder strong{display:block;color:#fff;font-size:17px;margin-bottom:6px}.track{margin:15px 0 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}.tracktitle{font-weight:650;overflow-wrap:anywhere}.sub{color:var(--muted);font-size:12px}.controls{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:10px 13px;cursor:pointer;font:inherit;transition:.15s}.btn:hover{border-color:#7562d7;transform:translateY(-1px)}.btn.primary{background:var(--accent);border-color:var(--accent);font-weight:700}.btn.round{width:44px;height:44px;border-radius:50%;padding:0;font-size:17px}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.row{display:flex;gap:8px}.row>*{min-width:0}.field{width:100%;background:#0b0f17;border:1px solid var(--line);border-radius:11px;color:var(--text);padding:11px 12px;font:inherit;outline:none}.field:focus{border-color:var(--accent)}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}.searchrow{display:flex;gap:8px}.searchrow .field{flex:1}.results{display:grid;gap:8px;margin-top:12px}.result{display:flex;gap:10px;align-items:center;padding:8px;border:1px solid transparent;border-radius:12px;background:#0d121b}.result img{width:94px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#222}.result .info{flex:1;min-width:0}.result .title{font-size:13px;font-weight:650;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.result .channel{font-size:11px;color:var(--muted);margin-top:4px}.result .btn{padding:8px 10px;font-size:12px}.queue{display:grid;gap:7px}.queueitem{display:flex;gap:9px;align-items:center;padding:8px;border-radius:11px;background:#0d121b}.queueitem .qtitle{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.queueitem .remove{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer}.status{font-size:12px;color:var(--muted);margin-top:12px;min-height:18px}.status.error{color:var(--red)}.hint{border:1px solid #443b78;background:#211b3b;border-radius:12px;padding:11px 12px;color:#d8d0ff;font-size:12px;margin:12px 0}.section{margin-top:16px}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px}.empty{color:var(--muted);font-size:12px;padding:10px 0}.smallbtn{font-size:12px;padding:7px 9px}.footer{color:#758196;font-size:11px;margin:16px 2px 0}.hidden{display:none!important}
-@media(max-width:760px){.wrap{padding:15px 11px 30px}.layout{grid-template-columns:1fr}.panel{padding:13px;border-radius:16px}.top{align-items:flex-start}.brand h1{font-size:18px}.pill{font-size:11px}.result img{width:84px}.controls{gap:8px}.btn{padding:9px 11px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Unison</title>
+  <meta name="theme-color" content="#2442e8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand"><div class="logo">♫</div><div><h1>SyncWave</h1><p>Shared YouTube listening room</p></div></div>
-    <div class="pill"><span class="dot" id="connDot"></span><span id="connText">Not connected</span></div>
-  </header>
-  <div class="layout">
-    <main class="panel">
-      <div class="sectionhead"><h2>Now playing</h2><span class="pill" id="roomBadge">No room</span></div>
-      <div class="playerbox" id="playerbox">
-        <div class="placeholder" id="placeholder"><div><strong>Welcome to SyncWave</strong>Create or join a room, then tap Enable playback on each device.</div></div>
-        <div id="player"></div>
-      </div>
-      <div class="track"><div><div class="tracktitle" id="nowTitle">Nothing playing yet</div><div class="sub" id="nowChannel">Search for a song to get started</div></div><button class="btn smallbtn" id="enableBtn">Enable playback</button></div>
-      <div class="controls">
-        <button class="btn round" id="prevBtn" title="Previous">⏮</button>
-        <button class="btn round primary" id="playBtn" title="Play/pause">▶</button>
-        <button class="btn round" id="nextBtn" title="Next">⏭</button>
-      </div>
-      <div class="row"><button class="btn" id="syncBtn" style="flex:1">↻ Resync</button><button class="btn" id="copyBtn">Copy room link</button></div>
-      <div class="status" id="playStatus">Create a room to begin.</div>
-      <div class="hint">For mobile Safari, tap <b>Enable playback</b> once on every device. Browsers may block remote autoplay until a user gesture.</div>
-      <div class="section">
-        <div class="sectionhead"><h2>Search YouTube</h2><span class="sub">Official YouTube player</span></div>
-        <div class="searchrow"><input class="field" id="searchInput" placeholder="Search songs, artists or paste a YouTube URL"><button class="btn primary" id="searchBtn">Search</button></div>
-        <div class="results" id="results"></div>
-        <div class="status" id="searchStatus"></div>
-      </div>
-    </main>
-    <aside class="panel">
-      <h2>Room setup</h2>
-      <label for="roomInput">Room code</label>
-      <div class="row"><input class="field" id="roomInput" maxlength="32" placeholder="e.g. friends-room"><button class="btn primary" id="joinBtn">Join</button></div>
-      <div class="row" style="margin-top:8px"><button class="btn" id="createBtn" style="flex:1">＋ Create room</button><button class="btn" id="leaveBtn">Leave</button></div>
-      <label for="apiKey">YouTube Data API key</label>
-      <input class="field" id="apiKey" type="password" placeholder="Paste API key to enable search" autocomplete="off">
-      <div class="sub" style="margin-top:6px">Key stays in this browser session only. Restrict it to your deployed website in Google Cloud.</div>
-      <div class="section">
-        <div class="sectionhead"><h2>Shared queue</h2><button class="btn smallbtn" id="clearQueueBtn">Clear</button></div>
-        <div class="queue" id="queue"><div class="empty">Queue is empty.</div></div>
-      </div>
-      <div class="section">
-        <h2>How to use</h2>
-        <div class="sub">1. Deploy the app and create a room.<br>2. Share the same room code/link.<br>3. Everyone taps Enable playback once.<br>4. Search and add tracks; controls sync to the room.</div>
-      </div>
-      <div class="status" id="roomStatus"></div>
-    </aside>
-  </div>
-  <div class="footer">SyncWave is an independent project and is not affiliated with YouTube. YouTube content plays through the official embedded player; availability and autoplay depend on YouTube and browser policies.</div>
-</div>
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const params = new URLSearchParams(location.search);
-  const initialRoom = params.get('room') || '';
-  const wsOverride = params.get('ws') || '';
-  const API_KEY_STORAGE = 'syncwave_youtube_key';
-  let socket = null, room = '', state = {videoId:'', title:'', channel:'', playing:false, position:0, startAt:0, queue:[], revision:0};
-  let player = null, playerReady = false, userEnabled = false, applyingRemote = false, lastAppliedRevision = -1, localSeekTimer = null;
-  let pendingStartTimer = null, reconnectTimer = null, reconnectAttempts = 0, intentionalLeave = false;
-  const apiKeyInput = $('apiKey');
-  apiKeyInput.value = sessionStorage.getItem(API_KEY_STORAGE) || '';
-  if (initialRoom) $('roomInput').value = initialRoom;
+  <main class="wrap">
 
-  function setStatus(id, msg, error=false) { $(id).textContent = msg; $(id).classList.toggle('error', !!error); }
-  function setConnection(ok, text) { $('connDot').classList.toggle('ok', ok); $('connText').textContent = text; }
-  function escapeHtml(s='') { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function makeRoomCode(){ return Math.random().toString(36).slice(2,7)+'-'+Math.random().toString(36).slice(2,5); }
-  function wsUrl() {
-    if (wsOverride) return wsOverride.replace(/\/$/,'') + '/room/' + encodeURIComponent(room);
-    const configured = window.SYNCWAVE_WS_URL;
-    if (configured) return configured.replace(/\/$/,'') + '/room/' + encodeURIComponent(room);
-    return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/room/' + encodeURIComponent(room);
-  }
-  function initPlayer(){
-    if (window.YT && window.YT.Player) createPlayer();
-    else if (!document.getElementById('yt-api-script')) {
-      const s=document.createElement('script');s.id='yt-api-script';s.src='https://www.youtube.com/iframe_api';document.head.appendChild(s);
-    }
-  }
-  window.onYouTubeIframeAPIReady = createPlayer;
-  function createPlayer(){
-    if (player || !window.YT || !window.YT.Player) return;
-    $('placeholder').classList.add('hidden');
-    player = new YT.Player('player', {
-      width:'100%', height:'100%', videoId:'',
-      playerVars:{playsinline:1,controls:1,rel:0,enablejsapi:1},
-      events:{
-        onReady:()=>{playerReady=true; $('placeholder').classList.remove('hidden'); setStatus('playStatus','Player ready. Join a room and enable playback.'); if(state.videoId) applyState(state,true);},
-        onStateChange:e=>{
-          if (applyingRemote) return;
-          if (e.data===YT.PlayerState.PLAYING && room) send({type:'playback', playing:true, position:safeTime(), videoId:state.videoId, title:state.title, channel:state.channel, startAt:Date.now()+900});
-          if (e.data===YT.PlayerState.PAUSED && room) send({type:'playback', playing:false, position:safeTime(), videoId:state.videoId, title:state.title, channel:state.channel, startAt:0});
-          if (e.data===YT.PlayerState.ENDED && room) nextTrack();
-        }
-      }
-    });
-  }
-  function safeTime(){try{return player && player.getCurrentTime ? player.getCurrentTime() : 0}catch{return 0}}
-  function send(obj){if(socket && socket.readyState===WebSocket.OPEN) socket.send(JSON.stringify(obj));}
-  function connectRoom(code){
-    code=String(code||'').trim().replace(/[^a-zA-Z0-9_-]/g,'').slice(0,32);
-    if(!code){setStatus('roomStatus','Enter a room code.',true);return}
-    intentionalLeave=false; room=code; $('roomInput').value=code; $('roomBadge').textContent=code;
-    if(socket){try{socket.close()}catch{}}
-    clearTimeout(reconnectTimer); setConnection(false,'Connecting…'); setStatus('roomStatus','Connecting to room '+code+'…');
-    try{socket=new WebSocket(wsUrl())}catch(e){setStatus('roomStatus','Could not open WebSocket: '+e.message,true);return}
-    socket.onopen=()=>{reconnectAttempts=0;setConnection(true,'Connected');setStatus('roomStatus','Connected. Share this room code with friends.');send({type:'hello',clientTime:Date.now()});history.replaceState(null,'',location.pathname+'?room='+encodeURIComponent(room));};
-    socket.onmessage=e=>{let msg;try{msg=JSON.parse(e.data)}catch{return} if(msg.type==='state'){state=msg.state||state; renderState(); if(state.videoId) applyState(state,false); } else if(msg.type==='event'){if(msg.from===socket.__clientId)return; if(msg.event && msg.event.state){state=msg.event.state;renderState();applyState(state,false)} } else if(msg.type==='error'){setStatus('roomStatus',msg.message||'Server error',true)} else if(msg.type==='pong'){/* latency probe */}};
-    socket.onclose=()=>{setConnection(false,'Disconnected');if(!intentionalLeave && room){setStatus('roomStatus','Connection lost. Reconnecting…');const delay=Math.min(10000,500*Math.pow(2,reconnectAttempts++));reconnectTimer=setTimeout(()=>connectRoom(room),delay)}};
-    socket.onerror=()=>{setConnection(false,'Connection error');setStatus('roomStatus','WebSocket connection failed. Check the deployed Worker URL.',true)};
-  }
-  function renderState(){
-    $('nowTitle').textContent=state.title||'Nothing playing yet';$('nowChannel').textContent=state.channel|| (state.videoId?'YouTube video':'Search for a song to get started');
-    $('playBtn').textContent=state.playing?'Ⅱ':'▶';
-    $('queue').innerHTML='';
-    if(!state.queue||!state.queue.length){$('queue').innerHTML='<div class="empty">Queue is empty.</div>';return}
-    state.queue.forEach((t,i)=>{const d=document.createElement('div');d.className='queueitem';d.innerHTML='<span class="sub">'+(i+1)+'.</span><div class="qtitle" title="'+escapeHtml(t.title)+'">'+escapeHtml(t.title)+'</div><button class="remove" aria-label="Remove">×</button>';d.querySelector('button').onclick=()=>send({type:'queue-remove',index:i});$('queue').appendChild(d)});
-  }
-  function applyState(s,force){
-    if(!playerReady || !player || !s || !s.videoId) return;
-    const rev=Number(s.revision||0);
-    if(!force && rev===lastAppliedRevision) {correctDrift(s);return}
-    lastAppliedRevision=rev;
-    const currentId=(()=>{try{return player.getVideoData().video_id||''}catch{return''}})();
-    const targetPos=Number(s.position||0)+(s.playing && s.startAt ? Math.max(0,Date.now()-Number(s.startAt))/1000 : 0);
-    applyingRemote=true;
-    clearTimeout(pendingStartTimer);
-    if(currentId!==s.videoId){
-      player.cueVideoById({videoId:s.videoId,startSeconds:Math.max(0,targetPos)});
-      if(s.playing){
-        // User gesture may be required on this device; Enable playback is provided above.
-        pendingStartTimer=setTimeout(()=>{try{player.seekTo(Math.max(0,targetPos),true);if(userEnabled)player.playVideo()}catch{} applyingRemote=false;},Math.max(0,Number(s.startAt||Date.now())-Date.now()));
-      } else {setTimeout(()=>{try{player.seekTo(Math.max(0,targetPos),true)}catch{} applyingRemote=false},350)}
-    } else {
-      try{player.seekTo(Math.max(0,targetPos),true);if(s.playing){if(userEnabled) player.playVideo()}else player.pauseVideo()}catch{}
-      setTimeout(()=>{applyingRemote=false},250);
-    }
-    $('placeholder').classList.add('hidden');
-    setStatus('playStatus',s.playing?'Shared playback is playing.':'Shared playback is paused.');
-  }
-  function correctDrift(s){
-    if(!playerReady || !player || !s.videoId) return;
-    const id=(()=>{try{return player.getVideoData().video_id||''}catch{return''}})();
-    if(id!==s.videoId){applyState(s,true);return}
-    const expected=Number(s.position||0)+(s.playing&&s.startAt?Math.max(0,Date.now()-Number(s.startAt))/1000:0);
-    const actual=safeTime(), diff=expected-actual;
-    if(Math.abs(diff)>1.25){applyingRemote=true;try{player.seekTo(Math.max(0,expected),true);if(s.playing&&userEnabled)player.playVideo();else if(!s.playing)player.pauseVideo()}catch{}setTimeout(()=>applyingRemote=false,300)}
-  }
-  function setTrack(videoId,title,channel,play=true){
-    if(!room){setStatus('roomStatus','Create or join a room first.',true);return}
-    send({type:'set-track',videoId,title,channel,playing:play,position:0,startAt:Date.now()+1800});
-  }
-  function addQueue(track){send({type:'queue-add',track})}
-  function nextTrack(){
-    if(state.queue && state.queue.length) send({type:'next'});
-    else send({type:'playback',playing:false,position:safeTime(),videoId:state.videoId,title:state.title,channel:state.channel,startAt:0});
-  }
-  $('createBtn').onclick=()=>{const code=makeRoomCode();connectRoom(code)};
-  $('joinBtn').onclick=()=>connectRoom($('roomInput').value);
-  $('leaveBtn').onclick=()=>{intentionalLeave=true;clearTimeout(reconnectTimer);if(socket){try{socket.close()}catch{}}socket=null;room='';$('roomBadge').textContent='No room';setConnection(false,'Not connected');setStatus('roomStatus','You left the room.');history.replaceState(null,'',location.pathname)};
-  $('enableBtn').onclick=()=>{userEnabled=true;if(!playerReady){initPlayer();setStatus('playStatus','Loading YouTube player… tap Enable playback again if needed.');return}try{if(state.videoId&&state.playing)player.playVideo();else player.playVideo();setStatus('playStatus','Playback enabled on this device.')}catch(e){setStatus('playStatus','Tap the YouTube player itself to allow playback.',true)}};
-  $('playBtn').onclick=()=>{if(!room)return setStatus('playStatus','Join a room first.',true);if(state.playing)send({type:'playback',playing:false,position:safeTime(),videoId:state.videoId,title:state.title,channel:state.channel,startAt:0});else send({type:'playback',playing:true,position:safeTime(),videoId:state.videoId,title:state.title,channel:state.channel,startAt:Date.now()+1500})};
-  $('prevBtn').onclick=()=>{if(state.queue && state.queue.length)send({type:'previous'})};
-  $('nextBtn').onclick=nextTrack;
-  $('syncBtn').onclick=()=>{send({type:'request-state'});if(state.videoId)applyState(state,true)};
-  $('copyBtn').onclick=async()=>{if(!room)return setStatus('roomStatus','Create or join a room first.',true);const url=new URL(location.href);url.searchParams.set('room',room);try{await navigator.clipboard.writeText(url.href);setStatus('roomStatus','Room link copied.')}catch{prompt('Copy this room link:',url.href)}};
-  $('clearQueueBtn').onclick=()=>send({type:'queue-clear'});
-  apiKeyInput.onchange=()=>{sessionStorage.setItem(API_KEY_STORAGE,apiKeyInput.value.trim())};
-  function extractVideoId(q){try{const u=new URL(q);if(u.hostname.includes('youtu.be'))return u.pathname.slice(1).split('/')[0];if(u.hostname.includes('youtube.com'))return u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop()}catch{}return /^[\w-]{11}$/.test(q.trim())?q.trim():''}
-  async function search(){
-    const q=$('searchInput').value.trim();if(!q)return;
-    const direct=extractVideoId(q);
-    if(direct){$('results').innerHTML='';const div=document.createElement('div');div.className='result';div.innerHTML='<div class="info"><div class="title">YouTube video: '+escapeHtml(direct)+'</div><div class="channel">Direct video ID or URL</div></div><button class="btn primary">Play</button><button class="btn">Queue</button>';div.children[1].onclick=()=>setTrack(direct,'YouTube video','YouTube');div.children[2].onclick=()=>addQueue({videoId:direct,title:'YouTube video',channel:'YouTube'});$('results').appendChild(div);setStatus('searchStatus','Video ID found.');return}
-    const key=apiKeyInput.value.trim();if(!key){setStatus('searchStatus','Add your YouTube Data API key in Room setup to search, or paste a YouTube URL.',true);return}
-    sessionStorage.setItem(API_KEY_STORAGE,key);$('searchBtn').disabled=true;setStatus('searchStatus','Searching YouTube…');$('results').innerHTML='';
-    try{
-      const url=new URL('https://www.googleapis.com/youtube/v3/search');url.search=new URLSearchParams({part:'snippet',q,type:'video',maxResults:'8',key}).toString();
-      const r=await fetch(url);const data=await r.json();if(!r.ok)throw new Error(data.error?.message||'YouTube search failed');
-      if(!data.items?.length){setStatus('searchStatus','No results found.');return}
-      data.items.forEach(item=>{const id=item.id.videoId,s=item.snippet;const div=document.createElement('div');div.className='result';div.innerHTML='<img loading="lazy" src="'+escapeHtml(s.thumbnails?.medium?.url||'')+'" alt=""><div class="info"><div class="title">'+escapeHtml(s.title)+'</div><div class="channel">'+escapeHtml(s.channelTitle)+'</div></div><button class="btn primary">Play</button><button class="btn">＋</button>';div.children[2].onclick=()=>setTrack(id,s.title,s.channelTitle,true);div.children[3].onclick=()=>addQueue({videoId:id,title:s.title,channel:s.channelTitle});$('results').appendChild(div)});
-      setStatus('searchStatus','Found '+data.items.length+' results.');
-    }catch(e){setStatus('searchStatus',e.message+' — check API key, quota and API enablement.',true)}finally{$('searchBtn').disabled=false}
-  }
-  $('searchBtn').onclick=search;$('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')search()});
-  // Player events are registered after the initial user action as well.
-  initPlayer();
-  renderState();
-  if(initialRoom) connectRoom(initialRoom);
-})();
-</script>
+    <!-- Join screen -->
+    <section id="join">
+      <h1>One track. Every device. The same second.</h1>
+      <p class="lede">Open this page on each phone or laptop, join the same room, and paste a YouTube link. Everyone hears it together.</p>
+      <form id="join-form" class="join-form">
+        <label for="room-input">Room code</label>
+        <input id="room-input" class="code-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="32" required>
+        <button class="btn primary" type="submit">Join room</button>
+      </form>
+    </section>
+
+    <!-- Room screen -->
+    <section id="room" hidden>
+      <header class="room-head">
+        <div>
+          <p class="muted">Room</p>
+          <h2 id="room-code" class="code"></h2>
+        </div>
+        <div class="beat-box">
+          <div id="beat" class="beat" aria-hidden="true"></div>
+          <p class="beat-note">Flashes together on every synced device</p>
+        </div>
+      </header>
+
+      <p id="status" class="status" role="status" aria-live="polite">Connecting…</p>
+
+      <div class="row">
+        <button id="copy-link" class="btn ghost" type="button">Copy invite link</button>
+        <button id="leave" class="btn ghost" type="button">Leave room</button>
+      </div>
+
+      <div id="stage" class="stage">
+        <div id="player"></div>
+        <p id="empty" class="empty">Paste a YouTube link below to start.</p>
+      </div>
+      <p id="now-playing" class="now"></p>
+
+      <form id="load-form" class="load-form">
+        <label class="sr" for="link-input">YouTube link</label>
+        <input id="link-input" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a YouTube link">
+        <button class="btn primary" type="submit">Load</button>
+      </form>
+      <p id="link-error" class="error" role="alert"></p>
+
+      <section class="transport">
+        <button id="play" class="play" type="button" data-playing="false" aria-label="Play" disabled>
+          <svg class="i-play" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
+        </button>
+        <div class="scrub">
+          <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek" disabled>
+          <div class="times"><span id="t-pos">0:00</span><span id="t-dur">0:00</span></div>
+        </div>
+      </section>
+
+      <label class="vol" for="vol">
+        <span>Volume on this device</span>
+        <input id="vol" type="range" min="0" max="100" value="100">
+      </label>
+    </section>
+  </main>
+
+  <!-- Shown when the browser refuses to start audio on its own -->
+  <div id="blocked" class="blocked" hidden>
+    <p>This device is not playing yet. Tap to start audio.</p>
+    <button id="unblock" class="btn dark" type="button">Start audio</button>
+  </div>
+
+  <script src="/app.js"></script>
 </body>
 </html>
