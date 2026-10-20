@@ -4,17 +4,10 @@
   /* ================================================================
      Tunables
      ================================================================ */
-  const DRIFT_LIMIT = 0.10;          // seconds of drift before the regular check corrects it
-  const SETTLE_LIMIT = 0.05;         // tighter limit for the checks right after a start
-  const SETTLE_AT = [1800, 3600];    // ms after a start when we re-check without waiting for a cooldown
-  const SETTLE_RETRIES = 4;          // extra re-checks allowed after a settle correction
-  const CORRECTION_COOLDOWN = 3000;  // ms between regular corrections
-  const SAMPLE_EVERY = 60;           // ms between drift samples
-  const SAMPLE_WINDOW = 1500;        // ms of samples kept for the drift estimate
-  const MIN_SAMPLES = 10;            // samples needed before trusting the estimate
-  const PING_BURST = 10;             // pings sent on connect to measure the clock offset
+  const DRIFT_LIMIT = 0.25;          // seconds of drift before we seek to correct
+  const CORRECTION_COOLDOWN = 5000;  // ms to wait after a correction or start
+  const PING_BURST = 8;              // pings sent on connect to measure the clock offset
   const PING_EVERY = 15000;          // ms between background clock refreshes
-  const CAL_TIMEOUT = 9000;          // ms before silent calibration gives up
 
   /* ================================================================
      Helpers
@@ -35,7 +28,6 @@
     const chars = "abcdefghjkmnpqrstuvwxyz23456789";
     return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
   };
-  const num = (v, d) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function parseYouTubeId(text) {
@@ -68,14 +60,8 @@
 
   // Player
   let player = null, playerReady = false, loadedId = null;
-  let startTimer = null, lastCorrection = 0, drift = 0;
-  let awaiting = null;    // {kind: "start" | "seek", at}: a play or seek whose delay we are measuring
-  let samplesD = [], overCount = 0, settleTimers = [], settleBudget = 0;
-  let cal = null, calDelay = null; // silent calibration state
-  // How long this device takes to turn playVideo() / seekTo() into sound (seconds). Learned and saved.
-  let lagKnown = store.get("unison.startLag") !== null;
-  let startLag = num(store.get("unison.startLag"), 0.15);
-  let seekLag = num(store.get("unison.seekLag"), 0.25);
+  let startTimer = null, awaitingPlay = null, lastCorrection = 0, drift = 0;
+  let startLag = parseFloat(store.get("unison.startLag")) || 0.15; // seconds between playVideo() and sound
   let scrubbing = false;
 
   const serverNow = () => nowMs() + offset;
@@ -123,8 +109,6 @@
     wantOpen = false;
     clearInterval(pingTimer);
     clearTimeout(startTimer);
-    cancelCalibration();
-    clearSettle();
     if (ws) ws.close();
     if (playerReady) { try { player.stopVideo(); } catch {} }
     state = null; loadedId = null; synced = false; listeners = 0;
@@ -174,22 +158,16 @@
     };
   }
 
-  // Send a quick series of pings to refine the clock offset.
-  function burst() {
+  function startClockSync() {
+    samples = [];
+    synced = false;
     let n = 0;
     const tick = () => {
       if (n++ >= PING_BURST || !ws || ws.readyState !== 1) return;
       send({ t: "ping", c: nowMs() });
-      setTimeout(tick, 80);
+      setTimeout(tick, 100);
     };
     tick();
-  }
-
-  // Full restart of clock sync; the room state is requested once it completes.
-  function startClockSync() {
-    samples = [];
-    synced = false;
-    burst();
   }
 
   function onPong(m) {
@@ -218,20 +196,11 @@
     if (m.t === "state" && synced) applyState(m.state);
   }
 
-  // Phones freeze timers in the background; refresh the clock when the tab returns.
-  // (The drift check then fixes the position, or shows the "Start audio" bar if the OS paused us.)
+  // Phones freeze timers in the background; re-align when the tab returns.
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && wantOpen && ws && ws.readyState === 1) {
-      burst();
-      setTimeout(() => checkDrift(true), 1500);
+      startClockSync();
     }
-  });
-
-  // Manual "Resync this device": re-measure the clock and re-apply the room state.
-  $("#resync").addEventListener("click", () => {
-    if (!ws || ws.readyState !== 1) return;
-    synced = false;   // keeps the samples; the first pong marks us synced and requests the state
-    burst();
   });
 
   /* ================================================================
@@ -258,22 +227,16 @@
   function onPlayerState(e) {
     const ps = e.data; // -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
     if (ps === 1) {
-      if (cal) { calOnPlaying(); return; }
       hideBlocked();
-      // Learn how long this device takes to go from playVideo() / seekTo() to sound.
-      if (awaiting && nowMs() - awaiting.at < 2000) {
-        const lag = (nowMs() - awaiting.at) / 1000;
-        if (lag >= 0.02 && lag < 1.2) {
-          if (awaiting.kind === "start") {
-            startLag = 0.6 * startLag + 0.4 * lag;
-            store.set("unison.startLag", String(startLag));
-          } else {
-            seekLag = 0.4 * seekLag + 0.6 * lag;
-            store.set("unison.seekLag", String(seekLag));
-          }
+      // Learn how long this device takes to go from playVideo() to sound.
+      if (awaitingPlay !== null) {
+        const lag = (serverNow() - awaitingPlay) / 1000;
+        if (lag >= 0 && lag < 1) {
+          startLag = 0.6 * startLag + 0.4 * lag;
+          store.set("unison.startLag", String(startLag));
         }
+        awaitingPlay = null;
       }
-      awaiting = null;
     }
     if (ps === 0 && state && state.playing) send({ t: "ended", version: state.version });
   }
@@ -283,13 +246,8 @@
     state = s;
     renderControls();
     if (!playerReady) return;
-    cancelCalibration();
     clearTimeout(startTimer);
-    clearSettle();
-    awaiting = null;
-    samplesD = [];
-    overCount = 0;
-    drift = 0;
+    awaitingPlay = null;
     if (!s.videoId) return;
 
     const now = serverNow();
@@ -306,136 +264,28 @@
         startTimer = setTimeout(startNow, Math.max(0, wait - startLag * 1000));
       } else {
         // Already running (late join, or returning to the tab): jump to where it should be.
-        if (fresh) {
-          player.loadVideoById({ videoId: s.videoId, startSeconds: expectedPos(now) + startLag });
-        } else {
-          awaiting = { kind: "seek", at: nowMs() };
-          player.seekTo(expectedPos(now) + seekLag, true);
-          player.playVideo();
-        }
+        const pos = expectedPos(now) + startLag;
+        if (fresh) player.loadVideoById({ videoId: s.videoId, startSeconds: pos });
+        else { player.seekTo(pos, true); player.playVideo(); }
         lastCorrection = performance.now();
-        scheduleSettle([2500, 4500]);
       }
-    } else if (fresh) {
-      player.cueVideoById({ videoId: s.videoId, startSeconds: s.position });
-      // Once the video is cued, warm it up silently and measure this device's start delay.
-      calDelay = setTimeout(startCalibration, 500);
     } else {
-      player.seekTo(s.position, true);
-      player.pauseVideo();
+      if (fresh) player.cueVideoById({ videoId: s.videoId, startSeconds: s.position });
+      else { player.seekTo(s.position, true); player.pauseVideo(); }
     }
   }
 
   function startNow() {
-    awaiting = { kind: "start", at: nowMs() };
-    samplesD = [];
-    overCount = 0;
+    awaitingPlay = serverNow();
     player.playVideo();
     lastCorrection = performance.now();
-    scheduleSettle(SETTLE_AT);
   }
 
-  /* ---------- silent calibration ----------
-     After a video is loaded (and before anyone presses play), each device plays it
-     muted for a moment. That (1) fills the buffer, so the first real start is not a
-     slow "cold" start, and (2) measures how long this device takes to start from a
-     paused, buffered state, so the first scheduled start is already compensated.   */
-  function startCalibration() {
-    calDelay = null;
-    if (!playerReady || !state || state.playing || state.videoId !== loadedId) return;
-    cancelCalibration();
-    cal = { step: 0, armed: true, t0: nowMs(), samples: [], timer: null, guard: null };
-    cal.guard = setTimeout(() => finishCalibration(false), CAL_TIMEOUT);
-    player.mute();
-    player.playVideo(); // step 0: cold start, only to fill the buffer
-  }
-
-  function calKick() {
-    if (!cal) return;
-    cal.armed = true;
-    cal.t0 = nowMs();
-    player.playVideo();
-  }
-
-  function calOnPlaying() {
-    const c = cal;
-    if (!c || !c.armed) return;   // ignore extra PLAYING events (e.g. resuming after buffering)
-    c.armed = false;
-    if (c.step > 0) c.samples.push((nowMs() - c.t0) / 1000);
-    c.step++;
-    player.pauseVideo();
-    if (c.samples.length >= 2) finishCalibration(true);
-    else c.timer = setTimeout(calKick, 350);
-  }
-
-  function finishCalibration(ok) {
-    const c = cal;
-    if (!c) return;
-    clearTimeout(c.timer);
-    clearTimeout(c.guard);
-    cal = null;
-    if (ok && c.samples.length) {
-      const avg = c.samples.reduce((a, b) => a + b, 0) / c.samples.length;
-      if (avg > 0.02 && avg < 1.2) {
-        startLag = lagKnown ? 0.5 * startLag + 0.5 * avg : avg;
-        lagKnown = true;
-        store.set("unison.startLag", String(startLag));
-      }
-    }
-    try {
-      player.pauseVideo();
-      player.seekTo(state ? state.position : 0, true);
-      player.unMute();
-    } catch {}
-    renderStatus();
-  }
-
-  // Stop calibrating because the room state changed; the new state is applied right after.
-  function cancelCalibration() {
-    clearTimeout(calDelay);
-    calDelay = null;
-    if (!cal) return;
-    clearTimeout(cal.timer);
-    clearTimeout(cal.guard);
-    cal = null;
-    try { player.unMute(); } catch {}
-  }
-
-  /* ---------- drift measurement and correction ----------
-     player.getCurrentTime() can lag behind the real position by a few hundred ms,
-     which always makes a device look *further behind* than it is. The freshest reading
-     is the one with the smallest apparent drift, so we use the minimum over the last
-     ~1.2 s of samples instead of a single reading.                                  */
+  // Drift check once a second.
   setInterval(() => {
-    if (!playerReady || !state || !state.playing || !synced || cal) return;
-    const now = serverNow();
-    if (now < state.updatedAt || player.getPlayerState() !== 1) return;
-    const t = performance.now();
-    samplesD.push({ t, d: expectedPos(now) - player.getCurrentTime() });
-    while (samplesD.length && t - samplesD[0].t > SAMPLE_WINDOW) samplesD.shift();
-  }, SAMPLE_EVERY);
-
-  const measuredDrift = () =>
-    samplesD.length < MIN_SAMPLES ? null : Math.min(...samplesD.map((x) => x.d));
-
-  function scheduleSettle(list) {
-    clearSettle();
-    settleBudget = SETTLE_RETRIES;
-    settleTimers = list.map((ms) => setTimeout(() => checkDrift(true), ms));
-  }
-  // After a correction (or when there are too few samples), look again soon.
-  function recheckSoon(ms) {
-    if (settleBudget-- > 0) settleTimers.push(setTimeout(() => checkDrift(true), ms));
-  }
-  function clearSettle() {
-    settleTimers.forEach(clearTimeout);
-    settleTimers = [];
-  }
-
-  // settle = true: a check just after a start; uses a tighter limit and ignores the cooldown.
-  function checkDrift(settle) {
-    if (!playerReady || !state || !state.videoId || !synced || cal) return;
-    if (!state.playing) { drift = 0; return; }
+    if (!playerReady || !state || !state.videoId || !synced) return;
+    drift = 0;
+    if (!state.playing) { renderStatus(); return; }
     const now = serverNow();
     if (now < state.updatedAt) return; // waiting for the scheduled start
     const ps = player.getPlayerState();
@@ -444,27 +294,12 @@
       if (now - state.updatedAt > 1500) showBlocked();
       return;
     }
-    const d = measuredDrift();
-    if (d === null) { if (settle) recheckSoon(500); return; }
-    drift = d; // positive = this device is behind the room
-    if (Math.abs(d) <= (settle ? SETTLE_LIMIT : DRIFT_LIMIT)) { overCount = 0; return; }
-    if (!settle) {
-      if (++overCount < 2) return; // two checks in a row, to avoid reacting to noise
-      if (performance.now() - lastCorrection < CORRECTION_COOLDOWN) return;
+    const target = expectedPos(now);
+    drift = target - player.getCurrentTime(); // positive = this device is behind
+    if (Math.abs(drift) > DRIFT_LIMIT && performance.now() - lastCorrection > CORRECTION_COOLDOWN) {
+      player.seekTo(target + startLag, true);
+      lastCorrection = performance.now();
     }
-    awaiting = { kind: "seek", at: nowMs() };
-    player.seekTo(expectedPos(now) + seekLag, true);
-    lastCorrection = performance.now();
-    samplesD = [];
-    overCount = 0;
-    if (settle) recheckSoon(1800);
-  }
-
-  setInterval(() => {
-    if (!playerReady) return;
-    // Safety: never leave this device muted by accident.
-    if (!cal && player.isMuted && player.isMuted()) player.unMute();
-    checkDrift(false);
     renderStatus();
   }, 1000);
 
@@ -532,8 +367,7 @@
     const people = `${listeners} ${listeners === 1 ? "device" : "devices"} in this room`;
     const clock = `clock accurate to about ${Math.max(1, Math.round(bestRtt / 2))} ms`;
     const d = state && state.playing && drift ? `, ${Math.round(Math.abs(drift) * 1000)} ms ${drift > 0 ? "behind" : "ahead"} of the room` : "";
-    const lag = `this device starts audio ${Math.round(startLag * 1000)} ms after play`;
-    statusEl.textContent = `${people}. Synced: ${clock}${d}. ${cal ? "Calibrating this device…" : lag[0].toUpperCase() + lag.slice(1) + "."}`;
+    statusEl.textContent = `${people}. Synced: ${clock}${d}.`;
   }
 
   // Position / duration / title, four times a second.
